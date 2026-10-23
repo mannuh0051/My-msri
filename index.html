@@ -1,123 +1,454 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Mashwari</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;800&display=swap" />
-    <style>
-      /* --- Boot splash (scoped to #boot so nothing leaks into React) --- */
-      #boot {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        display: grid;
-        place-items: center;
-        background: #fff;
-        cursor: pointer;
-        opacity: 1;
-        transition: opacity 0.4s ease;
-      }
-      #boot.hide { opacity: 0; pointer-events: none; }
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#00b050" />
+  <title>[COMPANY NAME] — Loan Application</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" />
+  <style>
+    :root{
+      --green:#00b050;--deep:#008a3e;--ink:#16382a;--mute:#6b8577;
+      --line:#dcebe2;--tint:#f2f9f5;--red:#e30512;--amber:#d4a017;
+      box-sizing:border-box;
+      padding-top:env(safe-area-inset-top,0px);
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#fff;color:var(--ink);
+      font-family:Montserrat,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
 
-      @keyframes boot-in { to { opacity: 1; transform: none; } }
+    .screen{display:none;flex-direction:column;min-height:100vh;min-height:100dvh;
+      width:100%;max-width:440px;margin:0 auto;padding:28px 24px 36px}
+    .screen.active{display:flex}
 
-      #boot .stage { display: flex; flex-direction: column; align-items: center; width: min(82vw, 840px); }
-      #boot .wm {
-        display: flex; align-items: flex-end; justify-content: center; margin: 0;
-        font-weight: 800; font-size: min(11.2vw, 118px); line-height: 1;
-        letter-spacing: -0.01em; color: #00b050;
-      }
-      #boot .wm .c { display: block; overflow: hidden; padding: 0.05em 0.01em; }
-      #boot .wm .c > i {
-        display: block; font-style: normal; opacity: 0; transform: translateY(70%);
-        animation: boot-rl 0.9s cubic-bezier(.22,.8,.2,1) calc(.5s + var(--i) * .07s) forwards;
-      }
-      @keyframes boot-rl { to { opacity: 1; transform: none; } }
+    h1{font-size:24px;line-height:1.25;font-weight:600;margin:0 0 8px}
+    h2{font-size:16px;font-weight:600;margin:24px 0 10px}
+    p{font-size:14px;line-height:1.55;color:var(--ink);margin:0 0 14px}
+    p.sub{color:var(--mute);font-size:13px;margin:0 0 24px}
 
-      #boot .sw { width: 0.95em; height: 0.43em; margin: 0 0.03em 0.26em; overflow: visible; }
-      #boot .sw .d {
-        opacity: 0; transform-box: fill-box;
-        animation: boot-fd 0.8s ease 1.5s forwards;
-      }
-      #boot .sw .b {
-        opacity: 0; transform-box: fill-box; transform-origin: 0 100%;
-        transform: translate(-30px, 14px) rotate(-12deg) scaleX(0.5);
-        animation: boot-fb 1s cubic-bezier(.22,.8,.2,1) 1.3s forwards,
-                   boot-flap 3.6s ease-in-out 3.4s infinite;
-      }
-      @keyframes boot-fd { from { transform: translateX(-10px); } to { opacity: 1; transform: none; } }
-      @keyframes boot-fb { to { opacity: 1; transform: none; } }
-      @keyframes boot-flap {
-        0%, 100% { transform: none; }
-        50% { transform: rotate(1.8deg) translateY(-3%) skewX(-3deg); }
-      }
+    label{display:block;font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px}
+    .field{margin-bottom:18px}
+    .field input,.field select{
+      width:100%;height:44px;padding:10px 12px;border:1px solid var(--line);
+      border-radius:10px;font-size:15px;background:#fff;color:var(--ink);outline:none;
+      -webkit-appearance:none;appearance:none}
+    .field input:focus,.field select:focus{border-color:var(--green)}
+    .field.bad input,.field.bad select{border-color:var(--red)}
+    .field .err{display:none;color:var(--red);font-size:12px;margin-top:6px}
+    .field.bad .err{display:block}
 
-      #boot .rule {
-        width: 100%; height: 1px; margin-top: clamp(20px, 4.5vw, 44px);
-        background: linear-gradient(90deg, transparent, #cfe9d9 20%, #cfe9d9 80%, transparent);
-        transform: scaleX(0);
-        animation: boot-grow 1.2s cubic-bezier(.65,0,.25,1) 2s forwards;
-      }
-      @keyframes boot-grow { to { transform: none; } }
+    .check{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:13px;color:var(--ink)}
+    .check input{margin-top:3px;flex-shrink:0}
 
-      #boot .motto {
-        margin: clamp(16px, 3.5vw, 30px) 0 0;
-        display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3em 1.4em;
-        font-weight: 500; font-size: clamp(13px, 2.6vw, 22px); letter-spacing: 0.14em;
-      }
-      #boot .motto span {
-        opacity: 0; transform: translateY(8px);
-        animation: boot-in 1s ease calc(2.5s + var(--w) * .45s) forwards;
-      }
-      #boot .motto .hl { color: #00b050; font-weight: 600; }
+    .btn{display:flex;align-items:center;justify-content:center;width:100%;height:52px;
+      border:0;border-radius:10px;background:var(--green);color:#fff;font-weight:600;
+      font-size:15px;cursor:pointer;transition:background .2s;margin-top:6px}
+    .btn:hover{background:var(--deep)}
+    .btn:disabled{background:var(--deep);opacity:.6;cursor:not-allowed}
+    .btn.secondary{background:var(--tint);color:var(--deep)}
+    .btn.secondary:hover{background:#e3f1ea}
 
-      #boot.replay * { animation: none !important; }
-      @media (prefers-reduced-motion: reduce) {
-        #boot .wm .c > i, #boot .sw .d, #boot .sw .b, #boot .motto span, #boot .rule {
-          animation: none; opacity: 1; transform: none;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="boot" onclick="replayBoot()">
-      <div class="stage">
-        <h1 class="wm" role="img" aria-label="Mashwari">
-          <span class="c"><i style="--i:0">M</i></span>
-          <svg class="sw" viewBox="0 0 200 90" aria-hidden="true">
-            <path class="d" d="M2 66C20 46 50 30 78 22C70 38 66 52 70 68C50 66 24 68 2 66Z" fill="#a30a12"/>
-            <path class="b" d="M70 68C66 50 72 34 84 22C110 12 150 8 194 4C176 22 160 40 140 52C118 66 94 70 70 68Z" fill="#e30512"/>
-          </svg>
-          <span class="c"><i style="--i:2">S</i></span>
-          <span class="c"><i style="--i:3">H</i></span>
-          <span class="c"><i style="--i:4">W</i></span>
-          <span class="c"><i style="--i:5">A</i></span>
-          <span class="c"><i style="--i:6">R</i></span>
-          <span class="c"><i style="--i:7">I</i></span>
-        </h1>
-        <div class="rule"></div>
-        <p class="motto">
-          <span style="--w:0">Save smart.</span>
-          <span style="--w:1">Spend wiser.</span>
-          <span class="hl" style="--w:2">Live better!</span>
-        </p>
-      </div>
+    .terms{background:var(--tint);border:1px solid var(--line);border-radius:12px;
+      padding:16px;margin:16px 0;font-size:13px;line-height:1.6}
+    .terms .row{display:flex;justify-content:space-between;padding:6px 0;gap:12px}
+    .terms .row + .row{border-top:1px solid var(--line)}
+    .terms .k{color:var(--mute)}
+    .terms .v{font-weight:600;text-align:right;word-break:break-word}
+    .terms .hi{color:var(--deep);font-weight:700}
+    .terms .total{font-size:15px}
+
+    .status{background:var(--tint);border-radius:12px;padding:16px;margin:16px 0;
+      text-align:center;font-size:13px;color:var(--deep);line-height:1.5}
+    .status.err{background:#fdecee;color:var(--red)}
+    .status .big{font-size:15px;font-weight:600;margin-bottom:6px}
+    .receipt{background:#fff;border:1px solid var(--line);border-radius:8px;
+      padding:10px 12px;margin-top:12px;text-align:left}
+    .receipt .lbl{font-size:11px;color:var(--mute)}
+    .receipt .val{font-weight:700;font-size:14px;color:var(--deep);
+      word-break:break-all;margin-top:2px}
+
+    .spinner{width:32px;height:32px;border:3px solid var(--line);
+      border-top-color:var(--green);border-radius:50%;
+      animation:spin .9s linear infinite;margin:0 auto 16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .footer{margin-top:auto;padding-top:24px;font-size:11px;color:var(--mute);
+      line-height:1.6;text-align:center}
+    .footer a{color:var(--deep);text-decoration:none}
+
+    .badge{display:inline-block;background:var(--tint);color:var(--deep);
+      font-size:11px;font-weight:700;letter-spacing:.06em;
+      padding:4px 10px;border-radius:6px;margin-bottom:14px}
+    .badge.green{background:var(--green);color:#fff}
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: Consent -->
+  <section id="screen-consent" class="screen active">
+    <span class="badge">STEP 1 OF 3</span>
+    <h1>Before you apply</h1>
+    <p class="sub">We collect personal data to assess your loan application. Please read and agree before continuing.</p>
+
+    <div class="terms">
+      <div class="row"><span class="k">Lender</span><span class="v">[COMPANY NAME]</span></div>
+      <div class="row"><span class="k">License</span><span class="v">[CBK / SACCO / CO-OP NUMBER]</span></div>
+      <div class="row"><span class="k">Regulator</span><span class="v">Central Bank of Kenya</span></div>
+      <div class="row"><span class="k">Data collected</span><span class="v">Name, phone, ID, DOB, county</span></div>
+      <div class="row"><span class="k">Purpose</span><span class="v">Loan assessment only</span></div>
+      <div class="row"><span class="k">Shared with</span><span class="v">Paylor (payment processing) only</span></div>
+      <div class="row"><span class="k">Retention</span><span class="v">90 days after loan closure</span></div>
     </div>
 
-    <div id="root"></div>
+    <label class="check">
+      <input type="checkbox" id="consentData" />
+      <span>I agree to my personal data being collected and used to assess my loan application, as described above.</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="consentTerms" />
+      <span>I confirm I am 18 or older and a Kenyan resident, and I accept the terms of service and privacy policy.</span>
+    </label>
 
-    <script>
-      function replayBoot() {
-        var b = document.getElementById('boot');
-        if (!b) return;
-        b.classList.add('replay');
-        void b.offsetWidth;
-        b.classList.remove('replay');
+    <button class="btn" id="btnConsent" disabled>Agree & continue</button>
+
+    <div class="footer">
+      Questions? <a href="mailto:[SUPPORT EMAIL]">[SUPPORT EMAIL]</a><br />
+      [COMPANY NAME] · [PHYSICAL ADDRESS] · Licensed by Central Bank of Kenya
+    </div>
+  </section>
+
+  <!-- SCREEN 2: Application -->
+  <section id="screen-apply" class="screen">
+    <span class="badge">STEP 2 OF 3</span>
+    <h1>Your application</h1>
+    <p class="sub">All fields are required for assessment. This is used only to evaluate your loan.</p>
+
+    <form id="applyForm" novalidate>
+      <div class="field" id="f-name">
+        <label>Full name (as on ID)</label>
+        <input type="text" id="fullName" autocomplete="name" placeholder="e.g. Jane Wanjiku Doe" />
+        <div class="err">Enter your full name as it appears on your national ID.</div>
+      </div>
+
+      <div class="field" id="f-phone">
+        <label>M-PESA phone number</label>
+        <input type="tel" id="phone" autocomplete="tel" placeholder="0712 345 678" />
+        <div class="err">Enter a valid Safaricom number starting 07 or 01.</div>
+      </div>
+
+      <div class="field" id="f-id">
+        <label>National ID number</label>
+        <input type="text" inputmode="numeric" id="idNumber" placeholder="12345678" maxlength="8" />
+        <div class="err">National ID must be 7–8 digits.</div>
+      </div>
+
+      <div class="field" id="f-dob">
+        <label>Date of birth</label>
+        <input type="date" id="dob" />
+        <div class="err">You must be between 18 and 70 years old.</div>
+      </div>
+
+      <div class="field" id="f-county">
+        <label>County of residence</label>
+        <select id="county">
+          <option value="">Select county</option>
+        </select>
+        <div class="err">Please select your county.</div>
+      </div>
+
+      <div class="field" id="f-amount">
+        <label>Loan amount (KES 500 – 10,000)</label>
+        <input type="number" id="amount" inputmode="numeric" min="500" max="10000" step="100" placeholder="3000" />
+        <div class="err">Choose an amount between KES 500 and KES 10,000.</div>
+      </div>
+
+      <button type="submit" class="btn">Check eligibility</button>
+    </form>
+
+    <div class="footer">Your data is encrypted in transit. We never ask for M-PESA PINs.</div>
+  </section>
+
+  <!-- SCREEN 3: Offer -->
+  <section id="screen-offer" class="screen">
+    <span class="badge green">APPROVED</span>
+    <h1>Your loan offer</h1>
+    <p class="sub">Review the full cost below. <strong>No upfront fees.</strong> You receive the principal first; repayment is only due on the date shown.</p>
+
+    <div class="terms">
+      <div class="row"><span class="k">Principal (you receive)</span><span class="v hi" id="offerPrincipal">KES 0</span></div>
+      <div class="row"><span class="k">Interest (10% flat)</span><span class="v" id="offerInterest">KES 0</span></div>
+      <div class="row"><span class="k">Other fees</span><span class="v">KES 0</span></div>
+      <div class="row total"><span class="k"><strong>Total to repay</strong></span><span class="v hi" id="offerTotal">KES 0</span></div>
+      <div class="row"><span class="k">Repayment date</span><span class="v" id="offerDue">—</span></div>
+      <div class="row"><span class="k">Disbursed to</span><span class="v" id="offerPhone">—</span></div>
+    </div>
+
+    <p class="sub" style="font-size:12px">By accepting, you authorise [COMPANY NAME] to send a disbursement to your M-PESA number now. Repayment will be requested on the due date via M-PESA STK push. Failure to repay may affect your credit record.</p>
+
+    <button class="btn" id="btnAccept">Accept & receive KES <span id="btnAcceptAmt">0</span></button>
+    <button class="btn secondary" id="btnDecline" style="margin-top:10px">Decline offer</button>
+
+    <div class="footer">[COMPANY NAME] · Licensed by Central Bank of Kenya · [LICENSE]</div>
+  </section>
+
+  <!-- SCREEN 4: Disbursing / Done -->
+  <section id="screen-status" class="screen">
+    <h1 id="statusTitle">Sending your funds…</h1>
+    <p class="sub" id="statusSub">A payment is on its way to your M-PESA. Do not close this page.</p>
+
+    <div id="statusBox" class="status">
+      <div class="spinner"></div>
+      <div class="big">Processing</div>
+      <div>Connecting to Paylor…</div>
+    </div>
+
+    <div class="footer">
+      [COMPANY NAME] · [SUPPORT EMAIL]<br />
+      Repayment due <span id="footerDue">—</span>
+    </div>
+  </section>
+
+  <script>
+    // ----------------------------------------------------------------
+    // CONFIG — replace with your real values
+    // ----------------------------------------------------------------
+    const CONFIG = {
+      companyName: '[COMPANY NAME]',
+      apiBase: '/api/pay',
+      interestFlat: 0.10,      // 10% flat
+      termDays: 30,
+      minAmount: 500,
+      maxAmount: 10000,
+      counties: ['Nairobi','Mombasa','Kisumu','Nakuru','Uasin Gishu','Meru','Nyeri','Kisii','Bomet','Kakamega','Machakos','Kilifi','Garissa','Kitui','Embu',"Murang'a",'Kiambu','Nyandarua','Laikipia','Turkana','Marsabit','Isiolo','Tharaka Nithi','Kirinyaga','Kajiado','Narok','Taita Taveta','Kwale','Tana River','Lamu','Mandera','Wajir','Vihiga','Bungoma','Busia','Nyamira']
+    };
+
+    // Populate county dropdown
+    const countySel = document.getElementById('county');
+    CONFIG.counties.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      countySel.appendChild(o);
+    });
+
+    // State
+    const state = {
+      consentedAt: null,
+      application: null,
+      offer: null,
+      disbursement: null
+    };
+
+    // Screen switcher
+    const screens = ['consent','apply','offer','status'];
+    function show(name){
+      screens.forEach(s => {
+        document.getElementById('screen-'+s).classList.toggle('active', s===name);
+      });
+      window.scrollTo(0,0);
+    }
+
+    // ----------------------------------------------------------------
+    // Helpers
+    // ----------------------------------------------------------------
+    function normalizePhone(raw){
+      let p = String(raw).replace(/\D/g,'');
+      if(p.startsWith('0')) p = p.slice(1);
+      if(p.startsWith('7') || p.startsWith('1')) p = '254'+p;
+      else if(!p.startsWith('254')) p = '254'+p;
+      return p;
+    }
+
+    function formatKES(n){
+      return 'KES ' + Number(n).toLocaleString('en-KE');
+    }
+
+    function setFieldError(id, isBad){
+      document.getElementById('f-'+id).classList.toggle('bad', isBad);
+    }
+
+    function apiCall(method, query, body){
+      const url = query ? CONFIG.apiBase + '?' + new URLSearchParams(query) : CONFIG.apiBase;
+      return fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined
+      }).then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if(!r.ok) throw new Error(data.error || ('Request failed ('+r.status+')'));
+        return data;
+      });
+    }
+
+    // ----------------------------------------------------------------
+    // STEP 1 — Consent
+    // ----------------------------------------------------------------
+    const cb1 = document.getElementById('consentData');
+    const cb2 = document.getElementById('consentTerms');
+    const btnConsent = document.getElementById('btnConsent');
+    function checkConsent(){
+      btnConsent.disabled = !(cb1.checked && cb2.checked);
+    }
+    cb1.addEventListener('change', checkConsent);
+    cb2.addEventListener('change', checkConsent);
+
+    btnConsent.addEventListener('click', () => {
+      state.consentedAt = new Date().toISOString();
+      show('apply');
+    });
+
+    // ----------------------------------------------------------------
+    // STEP 2 — Application
+    // ----------------------------------------------------------------
+    const applyForm = document.getElementById('applyForm');
+
+    applyForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const phoneRaw = document.getElementById('phone').value.trim();
+      const idNumber = document.getElementById('idNumber').value.trim();
+      const dobStr = document.getElementById('dob').value;
+      const county = countySel.value;
+      const amount = Number(document.getElementById('amount').value);
+
+      const phone = normalizePhone(phoneRaw);
+
+      // Validate
+      let ok = true;
+      const nameOk = /^[A-Za-z\s.'-]{3,}$/.test(fullName);
+      setFieldError('name', !nameOk); if(!nameOk) ok = false;
+
+      const phoneOk = /^254(7|1)\d{8}$/.test(phone);
+      setFieldError('phone', !phoneOk); if(!phoneOk) ok = false;
+
+      const idOk = /^\d{7,8}$/.test(idNumber);
+      setFieldError('id', !idOk); if(!idOk) ok = false;
+
+      let ageOk = false, dobIso = '';
+      if(dobStr){
+        const dob = new Date(dobStr);
+        if(!isNaN(dob)){
+          const age = Math.floor((Date.now() - dob.getTime())/(365.25*24*3600*1000));
+          if(age >= 18 && age <= 70){ ageOk = true; dobIso = dobStr; }
+        }
       }
-    </script>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+      setFieldError('dob', !ageOk); if(!ageOk) ok = false;
+
+      const countyOk = county !== '';
+      setFieldError('county', !countyOk); if(!countyOk) ok = false;
+
+      const amtOk = Number.isFinite(amount) && amount >= CONFIG.minAmount && amount <= CONFIG.maxAmount;
+      setFieldError('amount', !amtOk); if(!amtOk) ok = false;
+
+      if(!ok) return;
+
+      state.application = { fullName, phone, idNumber, dob: dobIso, county, amount };
+
+      // Compute offer (in a real build, this logic lives on the server and is
+      // re-verified on submit — doing it here for the demo).
+      const interest = Math.round(amount * CONFIG.interestFlat);
+      const total = amount + interest;
+      const due = new Date();
+      due.setDate(due.getDate() + CONFIG.termDays);
+
+      state.offer = {
+        principal: amount,
+        interest,
+        total,
+        dueDate: due.toISOString().slice(0,10),
+        phone: state.application.phone
+      };
+
+      // Render offer screen
+      document.getElementById('offerPrincipal').textContent = formatKES(state.offer.principal);
+      document.getElementById('offerInterest').textContent = formatKES(state.offer.interest);
+      document.getElementById('offerTotal').textContent = formatKES(state.offer.total);
+      document.getElementById('offerDue').textContent = state.offer.dueDate;
+      document.getElementById('offerPhone').textContent = '+'+state.offer.phone;
+      document.getElementById('btnAcceptAmt').textContent = state.offer.principal.toLocaleString('en-KE');
+      document.getElementById('footerDue').textContent = state.offer.dueDate;
+
+      show('offer');
+    });
+
+    // ----------------------------------------------------------------
+    // STEP 3 — Offer
+    // ----------------------------------------------------------------
+    document.getElementById('btnDecline').addEventListener('click', () => {
+      state.application = null;
+      state.offer = null;
+      applyForm.reset();
+      show('apply');
+    });
+
+    document.getElementById('btnAccept').addEventListener('click', async () => {
+      const btn = document.getElementById('btnAccept');
+      btn.disabled = true;
+
+      document.getElementById('statusTitle').textContent = 'Sending your funds…';
+      document.getElementById('statusSub').textContent = 'A payment is on its way to your M-PESA. Do not close this page.';
+      document.getElementById('statusBox').className = 'status';
+      document.getElementById('statusBox').innerHTML =
+        '<div class="spinner"></div><div class="big">Processing</div><div>Connecting to Paylor…</div>';
+      show('status');
+
+      try {
+        const res = await apiCall('POST', null, {
+          action: 'b2c',
+          phone: state.offer.phone,
+          amount: state.offer.principal,
+          reference: 'LOAN-' + Date.now(),
+          remarks: 'Loan disbursement - ' + CONFIG.companyName
+        });
+
+        const txId = res.transactionId || res.id;
+        if(!txId) throw new Error('No transaction ID from server');
+
+        document.getElementById('statusBox').innerHTML =
+          '<div class="spinner"></div><div class="big">Confirming with M-PESA</div>' +
+          '<div>Waiting for Safaricom to confirm the transfer…</div>';
+
+        await pollUntilDone(txId);
+
+        document.getElementById('statusTitle').textContent = 'Funds sent';
+        document.getElementById('statusSub').textContent = 'Check your M-PESA for the incoming payment. Repayment will be requested on your due date.';
+        document.getElementById('statusBox').className = 'status';
+        document.getElementById('statusBox').innerHTML =
+          '<div class="big">Loan disbursed</div>' +
+          '<div>Your principal of ' + formatKES(state.offer.principal) + ' is on its way.</div>' +
+          '<div class="receipt"><div class="lbl">Transaction</div><div class="val">' + txId + '</div></div>' +
+          '<div style="margin-top:12px">Total to repay <strong>' + formatKES(state.offer.total) + '</strong> by <strong>' + state.offer.dueDate + '</strong>.</div>';
+
+      } catch(err) {
+        document.getElementById('statusTitle').textContent = 'Could not complete';
+        document.getElementById('statusSub').textContent = 'Nothing was charged. You can try again.';
+        document.getElementById('statusBox').className = 'status err';
+        document.getElementById('statusBox').innerHTML =
+          '<div class="big">Disbursement failed</div><div>' + err.message + '</div>';
+        btn.disabled = false;
+      }
+    });
+
+    async function pollUntilDone(txId){
+      const max = 30, waitMs = 3000;
+      for(let i=0; i<max; i++){
+        await new Promise(r => setTimeout(r, waitMs));
+        try {
+          const t = await apiCall('GET', { transactionId: txId });
+          const s = (t.status || t.state || '').toUpperCase();
+          if(s === 'COMPLETED' || s === 'SUCCESS') return t;
+          if(s === 'FAILED' || s === 'CANCELLED') throw new Error('Payment ' + s.toLowerCase());
+        } catch(e) {
+          if(/failed|cancelled/i.test(e.message)) throw e;
+          // network glitch — keep polling
+        }
+      }
+      throw new Error('Timed out waiting for M-PESA confirmation');
+    }
+  </script>
+</body>
 </html>
