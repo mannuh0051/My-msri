@@ -3,11 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#00b050" />
     <title>M-Shwari</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" />
+    <style>
+      html,body{margin:0;background:#fff;color:#16382a;font-family:Montserrat,"Helvetica Neue",Arial,sans-serif}
+      #preload{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+      #preload .dot{width:38px;height:38px;border-radius:50%;border:3px solid #dcebe2;border-top-color:#00b050;animation:preload-spin .9s linear infinite}
+      #preload .txt{font-size:11px;font-weight:600;color:#6b8577;letter-spacing:.18em;text-transform:uppercase}
+      @keyframes preload-spin{to{transform:rotate(360deg)}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="preload">
+        <div class="dot"></div>
+        <div class="txt">M-Shwari</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
