@@ -1,28 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#00b050" />
-    <title>M-Shwari</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Mashwari</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;800&display=swap" />
     <style>
-      html,body{margin:0;background:#fff;color:#16382a;font-family:Montserrat,"Helvetica Neue",Arial,sans-serif}
-      #preload{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-      #preload .dot{width:38px;height:38px;border-radius:50%;border:3px solid #dcebe2;border-top-color:#00b050;animation:preload-spin .9s linear infinite}
-      #preload .txt{font-size:11px;font-weight:600;color:#6b8577;letter-spacing:.18em;text-transform:uppercase}
-      @keyframes preload-spin{to{transform:rotate(360deg)}}
+      /* --- Boot splash (scoped to #boot so nothing leaks into React) --- */
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        cursor: pointer;
+        opacity: 1;
+        transition: opacity 0.4s ease;
+      }
+      #boot.hide { opacity: 0; pointer-events: none; }
+
+      @keyframes boot-in { to { opacity: 1; transform: none; } }
+
+      #boot .stage { display: flex; flex-direction: column; align-items: center; width: min(82vw, 840px); }
+      #boot .wm {
+        display: flex; align-items: flex-end; justify-content: center; margin: 0;
+        font-weight: 800; font-size: min(11.2vw, 118px); line-height: 1;
+        letter-spacing: -0.01em; color: #00b050;
+      }
+      #boot .wm .c { display: block; overflow: hidden; padding: 0.05em 0.01em; }
+      #boot .wm .c > i {
+        display: block; font-style: normal; opacity: 0; transform: translateY(70%);
+        animation: boot-rl 0.9s cubic-bezier(.22,.8,.2,1) calc(.5s + var(--i) * .07s) forwards;
+      }
+      @keyframes boot-rl { to { opacity: 1; transform: none; } }
+
+      #boot .sw { width: 0.95em; height: 0.43em; margin: 0 0.03em 0.26em; overflow: visible; }
+      #boot .sw .d {
+        opacity: 0; transform-box: fill-box;
+        animation: boot-fd 0.8s ease 1.5s forwards;
+      }
+      #boot .sw .b {
+        opacity: 0; transform-box: fill-box; transform-origin: 0 100%;
+        transform: translate(-30px, 14px) rotate(-12deg) scaleX(0.5);
+        animation: boot-fb 1s cubic-bezier(.22,.8,.2,1) 1.3s forwards,
+                   boot-flap 3.6s ease-in-out 3.4s infinite;
+      }
+      @keyframes boot-fd { from { transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+      @keyframes boot-fb { to { opacity: 1; transform: none; } }
+      @keyframes boot-flap {
+        0%, 100% { transform: none; }
+        50% { transform: rotate(1.8deg) translateY(-3%) skewX(-3deg); }
+      }
+
+      #boot .rule {
+        width: 100%; height: 1px; margin-top: clamp(20px, 4.5vw, 44px);
+        background: linear-gradient(90deg, transparent, #cfe9d9 20%, #cfe9d9 80%, transparent);
+        transform: scaleX(0);
+        animation: boot-grow 1.2s cubic-bezier(.65,0,.25,1) 2s forwards;
+      }
+      @keyframes boot-grow { to { transform: none; } }
+
+      #boot .motto {
+        margin: clamp(16px, 3.5vw, 30px) 0 0;
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3em 1.4em;
+        font-weight: 500; font-size: clamp(13px, 2.6vw, 22px); letter-spacing: 0.14em;
+      }
+      #boot .motto span {
+        opacity: 0; transform: translateY(8px);
+        animation: boot-in 1s ease calc(2.5s + var(--w) * .45s) forwards;
+      }
+      #boot .motto .hl { color: #00b050; font-weight: 600; }
+
+      #boot.replay * { animation: none !important; }
+      @media (prefers-reduced-motion: reduce) {
+        #boot .wm .c > i, #boot .sw .d, #boot .sw .b, #boot .motto span, #boot .rule {
+          animation: none; opacity: 1; transform: none;
+        }
+      }
     </style>
   </head>
   <body>
-    <div id="root">
-      <div id="preload">
-        <div class="dot"></div>
-        <div class="txt">M-Shwari</div>
+    <div id="boot" onclick="replayBoot()">
+      <div class="stage">
+        <h1 class="wm" role="img" aria-label="Mashwari">
+          <span class="c"><i style="--i:0">M</i></span>
+          <svg class="sw" viewBox="0 0 200 90" aria-hidden="true">
+            <path class="d" d="M2 66C20 46 50 30 78 22C70 38 66 52 70 68C50 66 24 68 2 66Z" fill="#a30a12"/>
+            <path class="b" d="M70 68C66 50 72 34 84 22C110 12 150 8 194 4C176 22 160 40 140 52C118 66 94 70 70 68Z" fill="#e30512"/>
+          </svg>
+          <span class="c"><i style="--i:2">S</i></span>
+          <span class="c"><i style="--i:3">H</i></span>
+          <span class="c"><i style="--i:4">W</i></span>
+          <span class="c"><i style="--i:5">A</i></span>
+          <span class="c"><i style="--i:6">R</i></span>
+          <span class="c"><i style="--i:7">I</i></span>
+        </h1>
+        <div class="rule"></div>
+        <p class="motto">
+          <span style="--w:0">Save smart.</span>
+          <span style="--w:1">Spend wiser.</span>
+          <span class="hl" style="--w:2">Live better!</span>
+        </p>
       </div>
     </div>
+
+    <div id="root"></div>
+
+    <script>
+      function replayBoot() {
+        var b = document.getElementById('boot');
+        if (!b) return;
+        b.classList.add('replay');
+        void b.offsetWidth;
+        b.classList.remove('replay');
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
